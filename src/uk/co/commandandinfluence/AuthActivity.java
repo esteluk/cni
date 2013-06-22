@@ -65,6 +65,9 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
     GoogleCloudMessaging gcm;
     Context applicationContext;
     String regId;
+    
+    SharedPreferences mPrefs;
+    SharedPreferences.Editor mEditor;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +78,10 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 		final EditText first = (EditText) findViewById(R.id.auth_firstname);
 		final EditText last = (EditText) findViewById(R.id.auth_lastname);
 		final EditText password = (EditText) findViewById(R.id.auth_password);
+		
+		// Set up prefs
+		mPrefs = getSharedPreferences("SharedPreferences", Context.MODE_PRIVATE);
+		mEditor = mPrefs.edit();
 		
 		mPlusClient = new PlusClient.Builder(this, this, this)
 		        .setVisibleActivities("http://schemas.google.com/AddActivity", "http://schemas.google.com/BuyActivity")
@@ -100,10 +107,8 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 				try {
 					id = computeShaHash(firstname + lastname + passphrase);
 				} catch (NoSuchAlgorithmException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
@@ -134,7 +139,9 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 								// Login user
 								Gson gson = new Gson();
 								final User user = gson.fromJson(userResponse.get(0).toString(), User.class);
-								Log.d(TAG, user.first_name);
+								Log.d(TAG, user.first_name + " " + user.last_name);
+								
+								mEditor.putString("USER_ID", user.id);
 								
 							} else {
 								Log.d(TAG, "Creating a new user");
@@ -144,8 +151,11 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 								newUser.last_name = lastname;
 								
 								cbHelper.insertDocument(newUser, "user");
+								
+								mEditor.putString("USER_ID", newUser.id);
 							}
-							
+							mEditor.commit();
+							finish();
 						}
 						
 					});
@@ -153,6 +163,11 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 			}
 			
 		});
+		
+		// If we've already logged in, we can skip this
+		if (mPrefs.contains("USER_ID")) {
+			// Open some other activity
+		}
 		
 		// Progress bar to be displayed if the connection failure is not resolved.
 		mConnectionProgressDialog = new ProgressDialog(this);

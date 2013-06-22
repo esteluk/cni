@@ -426,8 +426,9 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         
         if (mChannelSubscriptionState) {
+        	String user = mPrefs.getString("USER_ID", "");
         	channel.trigger("client-location", "{\"location\" : {\"latitude\" : \"" + location.getLatitude()
-        			+ "\", \"longitude\" : \"" + location.getLongitude()  + "\"}}");
+        			+ "\", \"longitude\" : \"" + location.getLongitude()  + "\"}, \"user\" : \"" + user + "\"}");
         }
     }
     
