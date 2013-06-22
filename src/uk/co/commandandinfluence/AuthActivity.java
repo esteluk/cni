@@ -2,11 +2,11 @@ package uk.co.commandandinfluence;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 
+import uk.co.commandandinfluence.Classes.User;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -89,7 +89,7 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 		
 		// Init cloudbase link
 		cbHelper = new CBHelper("commandandinfluence", getString(R.string.cloudbase_secret_key), this);
-		cbHelper.setPassword(md5(getString(R.string.cloudbase_app_password)));
+		cbHelper.setPassword(Utils.md5(getString(R.string.cloudbase_app_password)));
 		
 		// Set on click listener for google+ button
 		findViewById(R.id.auth_signinbutton).setOnClickListener(this);
@@ -105,7 +105,7 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 				
 				String id = null;
 				try {
-					id = computeShaHash(firstname + lastname + passphrase);
+					id = Utils.computeShaHash(firstname + lastname + passphrase);
 				} catch (NoSuchAlgorithmException e) {
 					e.printStackTrace();
 				} catch (UnsupportedEncodingException e) {
@@ -393,54 +393,12 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 	    editor.commit();
 	}
 	
-	private static String md5(String s) {
-        try {
-            // Create MD5 Hash
-            MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
-            digest.update(s.getBytes());
-            byte messageDigest[] = digest.digest();
-
-            // Create Hex String
-            StringBuffer hexString = new StringBuffer();
-            for (int i=0; i<messageDigest.length; i++)
-            	hexString.append(String.format("%02x", messageDigest[i]));
-            return hexString.toString();
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-	
-	public String computeShaHash(String input) throws NoSuchAlgorithmException, UnsupportedEncodingException{
-	    MessageDigest digest = MessageDigest.getInstance("SHA-256");
-	    digest.reset();
-
-	    byte[] byteData = digest.digest(input.getBytes("UTF-8"));
-	    StringBuffer sb = new StringBuffer();
-
-	    for (int i = 0; i < byteData.length; i++){
-	      sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
-	    }
-	    return sb.toString();
-	}
-
 	@Override
 	public void handleResponse(CBQueuedRequest req, CBHelperResponse res) {
 		// TODO Auto-generated method stub
 		Log.v("logTag", (res.isSuccess()?"OK":"FAILED"));
 		Log.v("logTag", res.getResponseDataString());
 		Log.d(TAG, res.getErrorMessage());
-	}
-	
-	class User {
-		private String id = "";
-		private String first_name = "";
-		private String last_name = "";
-		
-		User() {
-			
-		}
 	}
 	
 }

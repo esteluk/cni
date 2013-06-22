@@ -1,7 +1,9 @@
 package uk.co.commandandinfluence;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import android.app.Activity;
@@ -19,6 +21,10 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.cloudbase.CBHelper;
+import com.cloudbase.CBHelperResponder;
+import com.cloudbase.CBHelperResponse;
+import com.cloudbase.CBQueuedRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -64,142 +70,26 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 	Location mCurrentLocation;
 	boolean mChannelSubscriptionState;
 	PresenceChannel channel;
+	Pusher pusher;
 	
 	private static final String TAG = "MainActivity";
+	
+	CBHelper cbHelper;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
+		// Cloudbase init
+		cbHelper = new CBHelper("commandandinfluence", getString(R.string.cloudbase_secret_key), this);
+		cbHelper.setPassword(Utils.md5(getString(R.string.cloudbase_app_password)));
+		
+		// Pusher init
 		HttpAuthorizer authoriser = new HttpAuthorizer("http://jakexks.com/pusher/auth.php");
 		PusherOptions options = new PusherOptions().setAuthorizer(authoriser);
 		
-		Pusher pusher = new Pusher("7d3ebc72c0912d712cd6", options);
-		
-		final ListView list = (ListView) findViewById(R.id.main_list);
-		
-		final List<String> commands = new ArrayList<String>();
-		
-		/**
-		 * Configure the list view to an array backup data
-		 */
-		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, commands);
-		list.setAdapter(adapter);
-		
-		// Connect
-		pusher.connect(new ConnectionEventListener() {
-
-			@Override
-			public void onConnectionStateChange(ConnectionStateChange change) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void onError(String message, String code, Exception e) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-		}, ConnectionState.ALL);
-		
-		mChannelSubscriptionState = false;
-		
-		// Subscribe to channel
-		channel = pusher.subscribePresence("presence-game-1", new PresenceChannelEventListener() {
-
-			@Override
-			public void onAuthenticationFailure(String message, Exception e) {
-				// TODO Auto-generated method stub
-				Log.d(TAG, message);
-				Log.d(TAG, e.getMessage());
-			}
-
-			@Override
-			public void onSubscriptionSucceeded(String channelName) {
-				Log.d(TAG, "subscriptionsucceeded YAY");
-				mChannelSubscriptionState = true;
-			}
-
-			@Override
-			public void onEvent(String channelName, String eventName, String data) {
-				// I don't know what this is for.
-			}
-
-			@Override
-			public void onUsersInformationReceived(String channelName, Set<User> users) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void userSubscribed(String channelName, User user) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void userUnsubscribed(String channelName, User user) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-		});
-		
-		channel.bind("client-command", new PresenceChannelEventListener() {
-
-			@Override
-			public void onAuthenticationFailure(String arg0, Exception arg1) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void onSubscriptionSucceeded(String arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void onEvent(String arg0, String arg1, String data) {
-				
-				// Do something!
-				Gson gson = new Gson();
-				final Command command = gson.fromJson(data, Command.class);
-				
-				runOnUiThread(new Runnable() {
-
-					@Override
-					public void run() {
-						// TODO Auto-generated method stub
-						commands.add(0, command.command);
-						adapter.notifyDataSetChanged();
-					}
-					
-				});
-			}
-
-			@Override
-			public void onUsersInformationReceived(String arg0, Set<User> arg1) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void userSubscribed(String arg0, User arg1) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void userUnsubscribed(String arg0, User arg1) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-		});
-		
+		pusher = new Pusher("7d3ebc72c0912d712cd6", options);
 		
 		/**
 		 * Create location client
@@ -217,6 +107,7 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 		mPrefs = getSharedPreferences("SharedPreferences", Context.MODE_PRIVATE);
 		mEditor = mPrefs.edit();
 		mUpdatesRequested = false;
+		
 	}
 	
 	@Override
@@ -244,12 +135,137 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
             mEditor.putBoolean("KEY_UPDATES_ON", false);
             mEditor.commit();
         }
+        
+        final ListView list = (ListView) findViewById(R.id.main_list);
+		final List<String> commands = new ArrayList<String>();
+				
+		/**
+		 * Configure the list view to an array backup data
+		 */
+		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, commands);
+		list.setAdapter(adapter);
+				
+        
+		// Connect
+ 		pusher.connect(new ConnectionEventListener() {
+
+ 			@Override
+ 			public void onConnectionStateChange(ConnectionStateChange change) {
+ 				// TODO Auto-generated method stub
+ 				
+ 			}
+
+ 			@Override
+ 			public void onError(String message, String code, Exception e) {
+ 				// TODO Auto-generated method stub
+ 				
+ 			}
+ 			
+ 		}, ConnectionState.ALL);
+ 		
+ 		mChannelSubscriptionState = false;
+ 		
+ 		// Subscribe to channel
+ 		channel = pusher.subscribePresence("presence-game-1", new PresenceChannelEventListener() {
+
+ 			@Override
+ 			public void onAuthenticationFailure(String message, Exception e) {
+ 				// TODO Auto-generated method stub
+ 				Log.d(TAG, message);
+ 				Log.d(TAG, e.getMessage());
+ 			}
+
+ 			@Override
+ 			public void onSubscriptionSucceeded(String channelName) {
+ 				Log.d(TAG, "subscriptionsucceeded YAY");
+ 				mChannelSubscriptionState = true;
+ 			}
+
+ 			@Override
+ 			public void onEvent(String channelName, String eventName, String data) {
+ 				// I don't know what this is for.
+ 			}
+
+ 			@Override
+ 			public void onUsersInformationReceived(String channelName, Set<User> users) {
+ 				// TODO Auto-generated method stub
+ 				
+ 			}
+
+ 			@Override
+ 			public void userSubscribed(String channelName, User user) {
+ 				// TODO Auto-generated method stub
+ 				
+ 			}
+
+ 			@Override
+ 			public void userUnsubscribed(String channelName, User user) {
+ 				// TODO Auto-generated method stub
+ 				
+ 			}
+ 			
+ 		});
+ 		
+ 		channel.bind("client-command", new PresenceChannelEventListener() {
+
+ 			@Override
+ 			public void onAuthenticationFailure(String arg0, Exception arg1) {
+ 				// TODO Auto-generated method stub
+ 				
+ 			}
+
+ 			@Override
+ 			public void onSubscriptionSucceeded(String arg0) {
+ 				// TODO Auto-generated method stub
+ 				
+ 			}
+
+ 			@Override
+ 			public void onEvent(String arg0, String arg1, String data) {
+ 				
+ 				// Do something!
+ 				Gson gson = new Gson();
+ 				final Command command = gson.fromJson(data, Command.class);
+ 				
+ 				runOnUiThread(new Runnable() {
+
+ 					@Override
+ 					public void run() {
+ 						// TODO Auto-generated method stub
+ 						commands.add(0, command.command);
+ 						adapter.notifyDataSetChanged();
+ 					}
+ 					
+ 				});
+ 			}
+
+ 			@Override
+ 			public void onUsersInformationReceived(String arg0, Set<User> arg1) {
+ 				// TODO Auto-generated method stub
+ 				
+ 			}
+
+ 			@Override
+ 			public void userSubscribed(String arg0, User arg1) {
+ 				// TODO Auto-generated method stub
+ 				
+ 			}
+
+ 			@Override
+ 			public void userUnsubscribed(String arg0, User arg1) {
+ 				// TODO Auto-generated method stub
+ 				
+ 			}
+ 			
+ 		});
 	}
 	
 	@Override
 	protected void onPause() {
 		mEditor.putBoolean("KEY_UPDATES_ON", mUpdatesRequested);
         mEditor.commit();
+        
+        pusher.disconnect();
 		
 		super.onPause();
 	}
@@ -405,8 +421,25 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 	public void onConnected(Bundle dataBundle) {
 		// Yep
 		Toast.makeText(this, "Connected!", Toast.LENGTH_SHORT).show();
-		mCurrentLocation = mLocationClient.getLastLocation();
-		Log.d(TAG, mCurrentLocation.toString());
+
+		String id = mPrefs.getString("USER_ID", "");
+		Location location = mLocationClient.getLastLocation();
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("longitude", "" + location.getLongitude());
+		params.put("latitude", "" + location.getLatitude());
+		params.put("id", id);
+		
+		cbHelper.runCloudFunction("updateuserlocation", params, new CBHelperResponder() {
+
+			@Override
+			public void handleResponse(CBQueuedRequest req,
+					CBHelperResponse res) {
+				// TODO Auto-generated method stub
+				Log.d(TAG, res.getResponseDataString());
+			}
+			
+		});
+
 		mLocationClient.requestLocationUpdates(mLocationRequest, this);
 	}
 
