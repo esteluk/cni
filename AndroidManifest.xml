@@ -12,6 +12,14 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    
+    <!-- Push notifications -->
+	<uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+	<uses-permission android:name="android.permission.GET_ACCOUNTS" />
+	<uses-permission android:name="android.permission.WAKE_LOCK" />
+	<permission android:name="uk.co.commandandinfluence.permission.C2D_MESSAGE" 
+        android:protectionLevel="signature" />
+	<uses-permission android:name="uk.co.commandandinfluence.permission.C2D_MESSAGE" />
 
     <application
         android:allowBackup="true"
@@ -21,16 +29,28 @@
         <activity
             android:name="uk.co.commandandinfluence.MainActivity"
             android:label="@string/app_name" >
+        </activity>
+        <activity
+            android:name="uk.co.commandandinfluence.AuthActivity"
+            android:label="@string/title_activity_auth" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name="uk.co.commandandinfluence.AuthActivity"
-            android:label="@string/title_activity_auth" >
-        </activity>
+        
+        <!-- Push receivers -->
+        <receiver
+            android:name=".GcmBroadcastReceiver"
+            android:permission="com.google.android.c2dm.permission.SEND"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <category android:name="uk.co.commandandinfluence" />
+            </intent-filter>
+        </receiver>
+        <!-- <service android:name=".GcmIntentService" /> -->
     </application>
 
 </manifest>
