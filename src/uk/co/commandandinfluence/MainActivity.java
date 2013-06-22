@@ -265,6 +265,7 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 		mEditor.putBoolean("KEY_UPDATES_ON", mUpdatesRequested);
         mEditor.commit();
         
+        pusher.unsubscribe("presence-game-1");
         pusher.disconnect();
 		
 		super.onPause();
