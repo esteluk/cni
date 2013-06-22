@@ -1,9 +1,11 @@
 package uk.co.commandandinfluence;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -19,17 +21,21 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.cloudbase.CBHelper;
 import com.cloudbase.CBHelperResponder;
 import com.cloudbase.CBHelperResponse;
 import com.cloudbase.CBQueuedRequest;
+import com.cloudbase.datacommands.CBSearchCondition;
+import com.cloudbase.datacommands.CBSearchConditionOperator;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
 import com.google.android.gms.common.GooglePlayServicesClient.OnConnectionFailedListener;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.plus.PlusClient;
+import com.google.gson.Gson;
 
 public class AuthActivity extends Activity implements ConnectionCallbacks, OnConnectionFailedListener, OnClickListener, CBHelperResponder {
 
@@ -65,6 +71,11 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_auth);
 		
+		// Grab views
+		final EditText first = (EditText) findViewById(R.id.auth_firstname);
+		final EditText last = (EditText) findViewById(R.id.auth_lastname);
+		final EditText password = (EditText) findViewById(R.id.auth_password);
+		
 		mPlusClient = new PlusClient.Builder(this, this, this)
 		        .setVisibleActivities("http://schemas.google.com/AddActivity", "http://schemas.google.com/BuyActivity")
 		        .build();
@@ -73,8 +84,75 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 		cbHelper = new CBHelper("commandandinfluence", getString(R.string.cloudbase_secret_key), this);
 		cbHelper.setPassword(md5(getString(R.string.cloudbase_app_password)));
 		
-		// Set on click listener for button
+		// Set on click listener for google+ button
 		findViewById(R.id.auth_signinbutton).setOnClickListener(this);
+		
+		// Set an on click listener for the other button
+		findViewById(R.id.auth_submit).setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				final String firstname = first.getText().toString().trim();
+				final String lastname = last.getText().toString().trim();
+				final String passphrase = password.getText().toString();
+				
+				String id = null;
+				try {
+					id = computeShaHash(firstname + lastname + passphrase);
+				} catch (NoSuchAlgorithmException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				if (firstname.equals("")) {
+					// No firstname
+				} else if (lastname.equals("")) {
+					// No last name
+				} else if (passphrase.equals("")) {
+					// No password
+				} else {
+					
+					final String fid = id;
+					
+					CBSearchCondition cond = new CBSearchCondition(
+							"id", CBSearchConditionOperator.CBOperatorEqual, id);
+					cbHelper.searchDocument("user", cond, new CBHelperResponder() {
+	
+						@Override
+						public void handleResponse(CBQueuedRequest req,
+								CBHelperResponse res) {
+							// We have a row or we don't have a row
+							Log.d(TAG, res.getErrorMessage());
+							Log.d(TAG, res.getResponseDataString());
+							
+							ArrayList<?> userResponse = (ArrayList<?>) res.getData();
+							
+							if (userResponse.size() > 0) {
+								// Login user
+								Gson gson = new Gson();
+								final User user = gson.fromJson(userResponse.get(0).toString(), User.class);
+								Log.d(TAG, user.first_name);
+								
+							} else {
+								Log.d(TAG, "Creating a new user");
+								User newUser = new User();
+								newUser.id = fid;
+								newUser.first_name = firstname;
+								newUser.last_name = lastname;
+								
+								cbHelper.insertDocument(newUser, "user");
+							}
+							
+						}
+						
+					});
+				}
+			}
+			
+		});
 		
 		// Progress bar to be displayed if the connection failure is not resolved.
 		mConnectionProgressDialog = new ProgressDialog(this);
@@ -90,7 +168,6 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 			Log.d(TAG, regId);
 		}
 		gcm = GoogleCloudMessaging.getInstance(this);
-		
 	}
 	
 	@Override
@@ -319,6 +396,19 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
         }
         return "";
     }
+	
+	public String computeShaHash(String input) throws NoSuchAlgorithmException, UnsupportedEncodingException{
+	    MessageDigest digest = MessageDigest.getInstance("SHA-256");
+	    digest.reset();
+
+	    byte[] byteData = digest.digest(input.getBytes("UTF-8"));
+	    StringBuffer sb = new StringBuffer();
+
+	    for (int i = 0; i < byteData.length; i++){
+	      sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
+	    }
+	    return sb.toString();
+	}
 
 	@Override
 	public void handleResponse(CBQueuedRequest req, CBHelperResponse res) {
@@ -327,4 +417,15 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 		Log.v("logTag", res.getResponseDataString());
 		Log.d(TAG, res.getErrorMessage());
 	}
+	
+	class User {
+		private String id = "";
+		private String first_name = "";
+		private String last_name = "";
+		
+		User() {
+			
+		}
+	}
+	
 }
