@@ -2,6 +2,7 @@ package uk.co.commandandinfluence;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -26,11 +27,14 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.gson.Gson;
 import com.pusher.client.Pusher;
-import com.pusher.client.channel.Channel;
-import com.pusher.client.channel.SubscriptionEventListener;
+import com.pusher.client.PusherOptions;
+import com.pusher.client.channel.PresenceChannel;
+import com.pusher.client.channel.PresenceChannelEventListener;
+import com.pusher.client.channel.User;
 import com.pusher.client.connection.ConnectionEventListener;
 import com.pusher.client.connection.ConnectionState;
 import com.pusher.client.connection.ConnectionStateChange;
+import com.pusher.client.util.HttpAuthorizer;
 
 public class MainActivity extends Activity implements GooglePlayServicesClient.ConnectionCallbacks,
 GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
@@ -58,13 +62,20 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 	LocationRequest mLocationRequest;
 	boolean mUpdatesRequested;
 	Location mCurrentLocation;
+	boolean mChannelSubscriptionState;
+	PresenceChannel channel;
+	
+	private static final String TAG = "MainActivity";
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
-		Pusher pusher = new Pusher("7d3ebc72c0912d712cd6");
+		HttpAuthorizer authoriser = new HttpAuthorizer("http://jakexks.com/pusher/auth.php");
+		PusherOptions options = new PusherOptions().setAuthorizer(authoriser);
+		
+		Pusher pusher = new Pusher("7d3ebc72c0912d712cd6", options);
 		
 		final ListView list = (ListView) findViewById(R.id.main_list);
 		
@@ -93,32 +104,66 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 			
 		}, ConnectionState.ALL);
 		
-		// Subscribe to channel
-		Channel channel = pusher.subscribe("game-1");
+		mChannelSubscriptionState = false;
 		
-		// Listen to an event
-		channel.bind("command", new SubscriptionEventListener() {
+		// Subscribe to channel
+		channel = pusher.subscribePresence("presence-game-1", new PresenceChannelEventListener() {
 
 			@Override
-			public void onEvent(String channel, String event, String data) {
-				// Do something!
-				Gson gson = new Gson();
-				final Command command = gson.fromJson(data, Command.class);
-				
-				runOnUiThread(new Runnable() {
+			public void onAuthenticationFailure(String message, Exception e) {
+				// TODO Auto-generated method stub
+				Log.d(TAG, message);
+				Log.d(TAG, e.getMessage());
+			}
 
-					@Override
-					public void run() {
-						// TODO Auto-generated method stub
-						commands.add(0, command.text);
-						adapter.notifyDataSetChanged();
-					}
+			@Override
+			public void onSubscriptionSucceeded(String channelName) {
+				Log.d(TAG, "subscriptionsucceeded YAY");
+				mChannelSubscriptionState = true;
+			}
+
+			@Override
+			public void onEvent(String channelName, String eventName, String data) {
+				// TODO Auto-generated method stub
+				
+				if (eventName.equals("command")) {
+					// Do something!
+					Gson gson = new Gson();
+					final Command command = gson.fromJson(data, Command.class);
 					
-				});
+					runOnUiThread(new Runnable() {
+	
+						@Override
+						public void run() {
+							// TODO Auto-generated method stub
+							commands.add(0, command.text);
+							adapter.notifyDataSetChanged();
+						}
+						
+					});
+				}
+			}
+
+			@Override
+			public void onUsersInformationReceived(String channelName, Set<User> users) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void userSubscribed(String channelName, User user) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void userUnsubscribed(String channelName, User user) {
+				// TODO Auto-generated method stub
 				
 			}
 			
 		});
+		
 		
 		/**
 		 * Create location client
@@ -337,7 +382,7 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 		// Yep
 		Toast.makeText(this, "Connected!", Toast.LENGTH_SHORT).show();
 		mCurrentLocation = mLocationClient.getLastLocation();
-		Log.d("TAG", mCurrentLocation.toString());
+		Log.d(TAG, mCurrentLocation.toString());
 		mLocationClient.requestLocationUpdates(mLocationRequest, this);
 	}
 
@@ -355,5 +400,10 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
                 Double.toString(location.getLatitude()) + "," +
                 Double.toString(location.getLongitude());
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        
+        if (mChannelSubscriptionState) {
+        	channel.trigger("client-location", "{\"location\" : {\"latitude\" : \"" + location.getLatitude()
+        			+ "\", \"longitude\" : \"" + location.getLongitude()  + "\"}}");
+        }
     }
 }
