@@ -124,24 +124,7 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 
 			@Override
 			public void onEvent(String channelName, String eventName, String data) {
-				// TODO Auto-generated method stub
-				
-				if (eventName.equals("command")) {
-					// Do something!
-					Gson gson = new Gson();
-					final Command command = gson.fromJson(data, Command.class);
-					
-					runOnUiThread(new Runnable() {
-	
-						@Override
-						public void run() {
-							// TODO Auto-generated method stub
-							commands.add(0, command.text);
-							adapter.notifyDataSetChanged();
-						}
-						
-					});
-				}
+				// I don't know what this is for.
 			}
 
 			@Override
@@ -158,6 +141,59 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 
 			@Override
 			public void userUnsubscribed(String channelName, User user) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		});
+		
+		channel.bind("client-command", new PresenceChannelEventListener() {
+
+			@Override
+			public void onAuthenticationFailure(String arg0, Exception arg1) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onSubscriptionSucceeded(String arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onEvent(String arg0, String arg1, String data) {
+				
+				// Do something!
+				Gson gson = new Gson();
+				final Command command = gson.fromJson(data, Command.class);
+				
+				runOnUiThread(new Runnable() {
+
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						commands.add(0, command.command);
+						adapter.notifyDataSetChanged();
+					}
+					
+				});
+			}
+
+			@Override
+			public void onUsersInformationReceived(String arg0, Set<User> arg1) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void userSubscribed(String arg0, User arg1) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void userUnsubscribed(String arg0, User arg1) {
 				// TODO Auto-generated method stub
 				
 			}
@@ -328,18 +364,6 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
         }
     }
 	
-	/**
-	 * A class for the Command object returned by Pusher
-	 * 
-	 * @author nathan
-	 */
-	class Command {
-		private String text = "";
-		
-		Command() {
-			
-		}
-	}
 
 	/*
      * Called by Location Services if the attempt to
@@ -406,4 +430,17 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
         			+ "\", \"longitude\" : \"" + location.getLongitude()  + "\"}}");
         }
     }
+    
+    /**
+	 * A class for the Command object returned by Pusher
+	 * 
+	 * @author nathan
+	 */
+	class Command {
+		private String command = "";
+		
+		Command() {
+			
+		}
+	}
 }
