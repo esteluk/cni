@@ -3,5 +3,6 @@
 <!--
     <string name="cloudbase_secret_key"></string>
     <string name="cloudbase_app_password"></string>
+    <string name="googlemaps_api></string>
     -->
 </resources>

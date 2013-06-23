@@ -155,15 +155,20 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, commands);
 		list.setAdapter(adapter);
 		
+		final Intent mapIntent = new Intent(this, MapActivity.class);
+		
 		list.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
 			public void onItemClick(AdapterView<?> aView, View view, int position,
 					long id) {
 				// TODO Auto-generated method stub
-				Command command = commandArray.get(position);
-				if (command.command.equals("goto")) {
-					
+				Command instruction = commandArray.get(position);
+				Log.d(TAG, "" + instruction.command);
+				if (instruction.command.equals("goto")) {
+					mapIntent.putExtra("lat", instruction.extras.get("lat"));
+					mapIntent.putExtra("lng", instruction.extras.get("lng"));
+					startActivity(mapIntent);
 				}
 			}
 			
@@ -257,6 +262,7 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
  					public void run() {
  						// TODO Auto-generated method stub
  						commands.add(0, command.command + " " + command.message);
+ 						commandArray.add(command);
  						adapter.notifyDataSetChanged();
  					}
  					
@@ -485,7 +491,7 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
                 Double.toString(location.getLongitude());
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
         
-        if (mChannelSubscriptionState) {
+        if (mChannelSubscriptionState && pusher.getConnection().getState().equals(ConnectionState.CONNECTED)) {
         	String user = mPrefs.getString("USER_ID", "");
         	channel.trigger("client-location", "{\"location\" : {\"latitude\" : \"" + location.getLatitude()
         			+ "\", \"longitude\" : \"" + location.getLongitude()  + "\"}, \"user\" : \"" + user + "\"}");
