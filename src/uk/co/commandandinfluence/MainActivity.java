@@ -266,7 +266,7 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
  					@Override
  					public void run() {
  						// TODO Auto-generated method stub
- 						commands.add(0, command.command + " " + command.message);
+ 						commands.add(0, command.message);
  						commandArray.add(0, command);
  						adapter.notifyDataSetChanged();
  					}

@@ -34,12 +34,12 @@
 	    android:layout_height="wrap_content" android:orientation="horizontal"
 	    style="?android:attr/buttonBarStyle">
 	
-	    <Button android:id="@+id/cancelButton" android:layout_width="wrap_content"
+	    <Button android:id="@+id/mission_button_decline" android:layout_width="wrap_content"
 	        android:layout_height="wrap_content" android:layout_weight="1"
 	        style="?android:attr/buttonBarButtonStyle"
 	        android:text="@string/mission_button_decline" />
 
-	    <Button android:id="@+id/saveButton" android:layout_width="wrap_content"
+	    <Button android:id="@+id/mission_button_confirm" android:layout_width="wrap_content"
 	        android:layout_height="wrap_content" android:layout_weight="1"
 	        style="?android:attr/buttonBarButtonStyle"
 	        android:text="@string/mission_button_confirm" />
