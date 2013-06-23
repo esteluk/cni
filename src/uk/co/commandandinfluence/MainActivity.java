@@ -468,7 +468,9 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 			public void handleResponse(CBQueuedRequest req,
 					CBHelperResponse res) {
 				// TODO Auto-generated method stub
-				Log.d(TAG, res.getResponseDataString());
+				if (res != null) {
+					Log.d(TAG, res.getResponseDataString());
+				}
 			}
 			
 		});

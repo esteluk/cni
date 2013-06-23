@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -16,17 +17,21 @@ public class MapActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_map);
-		
-		GoogleMap map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map_map)).getMap();
-		map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-		
+
 		Intent intent = getIntent();
 		String lat = intent.getStringExtra("lat");
 		String lng = intent.getStringExtra("lng");
 		
+		LatLng pos = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
+		
+		GoogleMap map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map_map)).getMap();
+		map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+		map.setMyLocationEnabled(true);
+		map.animateCamera(CameraUpdateFactory.newLatLngZoom(pos, 16));
+		
 		if (!lat.equals("")) {
 			map.addMarker(new MarkerOptions()
-					.position(new LatLng(Double.parseDouble(lat), Double.parseDouble(lng)))
+					.position(pos)
 					.title("Target"));
 		}
 				
