@@ -51,6 +51,9 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 	// Global constants
 	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 900;
 	
+	//
+	private final static int OPEN_MAP_INTENT = 800;
+	
 	// Milliseconds per second
     private static final int MILLISECONDS_PER_SECOND = 1000;
     // Update frequency in seconds
@@ -74,6 +77,9 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 	boolean mChannelSubscriptionState;
 	PresenceChannel channel;
 	Pusher pusher;
+	
+	final List<String> commands = new ArrayList<String>();
+	final List<Command> commandArray = new ArrayList<Command>();
 	
 	private static final String TAG = "MainActivity";
 	
@@ -146,8 +152,6 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
         }
         
         final ListView list = (ListView) findViewById(R.id.main_list);
-		final List<String> commands = new ArrayList<String>();
-		final List<Command> commandArray = new ArrayList<Command>();
 				
 		/**
 		 * Configure the list view to an array backup data
@@ -166,9 +170,10 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 				Command instruction = commandArray.get(position);
 				Log.d(TAG, "" + instruction.command);
 				if (instruction.command.equals("goto")) {
+					mapIntent.putExtra("id", instruction.id);
 					mapIntent.putExtra("lat", instruction.extras.get("lat"));
 					mapIntent.putExtra("lng", instruction.extras.get("lng"));
-					startActivity(mapIntent);
+					startActivityForResult(mapIntent, OPEN_MAP_INTENT);
 				}
 			}
 			
@@ -262,7 +267,7 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
  					public void run() {
  						// TODO Auto-generated method stub
  						commands.add(0, command.command + " " + command.message);
- 						commandArray.add(command);
+ 						commandArray.add(0, command);
  						adapter.notifyDataSetChanged();
  					}
  					
@@ -372,7 +377,18 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 				 */
 				break;
 			}
+		case OPEN_MAP_INTENT :
+			switch(resultCode) {
+			case Activity.RESULT_OK : 
+				// TODO mark event as completed
+				break;
+			case Activity.RESULT_CANCELED :
+				
+				break;
+			}
+			
 		}
+		 
 	}
 	
 	private boolean servicesConnected() {
@@ -500,14 +516,21 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
         }
     }
     
+    
     /**
 	 * A class for the Command object returned by Pusher
 	 * 
 	 * @author nathan
 	 */
 	class Command {
+		public int STATE_RECEIVED = 1;
+		public int STATE_FAILED = 2;
+		public int STATE_SUCCESS = 3;
+		
+		private String id = "";
 		private String message = "";
 		private String command = "";
+		private int state = STATE_RECEIVED;
 		
 		HashMap<String, String> extras = new HashMap<String, String>();
 		

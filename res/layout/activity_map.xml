@@ -1,16 +1,32 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
+    android:padding="0dp"
+    android:orientation="vertical"
     tools:context=".MapActivity" >
 
     <fragment android:id="@+id/map_map"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:name="com.google.android.gms.maps.MapFragment"
          />
-</RelativeLayout>
+    
+    
+    
+    <LinearLayout android:id="@+id/footer" android:layout_width="fill_parent"
+	    android:layout_height="wrap_content" android:orientation="horizontal"
+	    style="?android:attr/buttonBarStyle">
+	
+	    <Button android:id="@+id/map_failbutton" android:layout_width="wrap_content"
+	        android:layout_height="wrap_content" android:layout_weight="1"
+	        style="?android:attr/buttonBarButtonStyle"
+	        android:text="@string/map_action_failed" />
+
+	    <Button android:id="@+id/map_completebutton" android:layout_width="wrap_content"
+	        android:layout_height="wrap_content" android:layout_weight="1"
+	        style="?android:attr/buttonBarButtonStyle"
+	        android:text="@string/map_action_complete" />
+	</LinearLayout>
+</LinearLayout>

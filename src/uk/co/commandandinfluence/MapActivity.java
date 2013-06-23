@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
+import android.view.View;
+import android.view.View.OnClickListener;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -18,7 +20,7 @@ public class MapActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_map);
 
-		Intent intent = getIntent();
+		final Intent intent = getIntent();
 		String lat = intent.getStringExtra("lat");
 		String lng = intent.getStringExtra("lng");
 		
@@ -34,6 +36,32 @@ public class MapActivity extends Activity {
 					.position(pos)
 					.title("Target"));
 		}
+		
+		findViewById(R.id.map_completebutton).setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				Intent resultIntent = new Intent();
+				resultIntent.putExtra("id", intent.getStringExtra("id"));
+				setResult(RESULT_OK, resultIntent);
+				finish();
+			}
+			
+		});
+		
+		findViewById(R.id.map_failbutton).setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				Intent failResultIntent = new Intent();
+				failResultIntent.putExtra("id", intent.getStringExtra("id"));
+				setResult(RESULT_CANCELED, failResultIntent);
+				finish();
+			}
+			
+		});
 				
 	}
 

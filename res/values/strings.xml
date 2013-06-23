@@ -13,6 +13,8 @@
     <string name="mission_image_desc">Image of your target</string>
     <string name="mission_button_confirm">Accept</string>
     <string name="mission_button_decline">Decline</string>
-    <string name="title_activity_map">MapActivity</string>
+    <string name="title_activity_map">Report to this location</string>
+    <string name="map_action_complete">Completed</string>
+    <string name="map_action_failed">Failed</string>
 
 </resources>
