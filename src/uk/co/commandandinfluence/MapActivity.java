@@ -44,6 +44,7 @@ public class MapActivity extends Activity {
 				// TODO Auto-generated method stub
 				Intent resultIntent = new Intent();
 				resultIntent.putExtra("id", intent.getStringExtra("id"));
+				resultIntent.putExtra("position", intent.getIntExtra("position", -1));
 				setResult(RESULT_OK, resultIntent);
 				finish();
 			}
@@ -57,6 +58,7 @@ public class MapActivity extends Activity {
 				// TODO Auto-generated method stub
 				Intent failResultIntent = new Intent();
 				failResultIntent.putExtra("id", intent.getStringExtra("id"));
+				failResultIntent.putExtra("position", intent.getIntExtra("position", -1));
 				setResult(RESULT_CANCELED, failResultIntent);
 				finish();
 			}

@@ -29,6 +29,7 @@ public class MissionActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				startActivity(intent);
+				finish();
 			}
 		});
 	}

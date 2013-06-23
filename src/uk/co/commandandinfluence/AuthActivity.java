@@ -83,6 +83,12 @@ public class AuthActivity extends Activity implements ConnectionCallbacks, OnCon
 		mPrefs = getSharedPreferences("SharedPreferences", Context.MODE_PRIVATE);
 		mEditor = mPrefs.edit();
 		
+		if (!mPrefs.getString("USER_ID", "").equals("")) {
+			Intent i = new Intent(this, MissionActivity.class);
+			startActivity(i);
+			finish();
+		}
+		
 		mPlusClient = new PlusClient.Builder(this, this, this)
 		        .setVisibleActivities("http://schemas.google.com/AddActivity", "http://schemas.google.com/BuyActivity")
 		        .build();

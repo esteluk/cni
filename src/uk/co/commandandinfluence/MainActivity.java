@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import uk.co.commandandinfluence.Classes.Command;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -80,6 +81,8 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 	
 	final List<String> commands = new ArrayList<String>();
 	final List<Command> commandArray = new ArrayList<Command>();
+	ListView list = null;
+	ArrayAdapter<Command>  adapter = null;
 	
 	private static final String TAG = "MainActivity";
 	
@@ -105,6 +108,9 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 		authoriser.setQueryStringParameters(map);
 		PusherOptions options = new PusherOptions().setAuthorizer(authoriser);
 		
+		list = (ListView) findViewById(R.id.main_list);
+		adapter = new BackgroundArrayAdapter(this, commandArray);
+		list.setAdapter(adapter);
 		
 		pusher = new Pusher("7d3ebc72c0912d712cd6", options);
 		
@@ -150,14 +156,10 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
             mEditor.putBoolean("KEY_UPDATES_ON", false);
             mEditor.commit();
         }
-        
-        final ListView list = (ListView) findViewById(R.id.main_list);
-				
+        		
 		/**
 		 * Configure the list view to an array backup data
 		 */
-		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, commands);
-		list.setAdapter(adapter);
 		
 		final Intent mapIntent = new Intent(this, MapActivity.class);
 		
@@ -171,6 +173,7 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 				Log.d(TAG, "" + instruction.command);
 				if (instruction.command.equals("goto")) {
 					mapIntent.putExtra("id", instruction.id);
+					mapIntent.putExtra("position", position);
 					mapIntent.putExtra("lat", instruction.extras.get("lat"));
 					mapIntent.putExtra("lng", instruction.extras.get("lng"));
 					startActivityForResult(mapIntent, OPEN_MAP_INTENT);
@@ -300,7 +303,7 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 		mEditor.putBoolean("KEY_UPDATES_ON", mUpdatesRequested);
         mEditor.commit();
         
-        if (pusher.getConnection().getState() != ConnectionState.DISCONNECTED) {
+        if (pusher.getConnection().getState() == ConnectionState.CONNECTED) {
         	pusher.unsubscribe("presence-game-1");
         }
         pusher.disconnect();
@@ -378,12 +381,24 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 				break;
 			}
 		case OPEN_MAP_INTENT :
+			int position = data.getIntExtra("position", -1);
+			Command c = null;
+			if (position < 0) {
+				break;
+			} else {
+				c = commandArray.get(position);
+			}
+			
 			switch(resultCode) {
 			case Activity.RESULT_OK : 
-				// TODO mark event as completed
+				c.state = c.STATE_SUCCESS;
+				commandArray.set(position, c);
+				adapter.notifyDataSetChanged();
 				break;
 			case Activity.RESULT_CANCELED :
-				
+				c.state = c.STATE_FAILED;
+				commandArray.set(position, c);
+				adapter.notifyDataSetChanged();
 				break;
 			}
 			
@@ -515,27 +530,5 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
         			+ "\", \"longitude\" : \"" + location.getLongitude()  + "\"}, \"user\" : \"" + user + "\"}");
         }
     }
-    
-    
-    /**
-	 * A class for the Command object returned by Pusher
-	 * 
-	 * @author nathan
-	 */
-	class Command {
-		public int STATE_RECEIVED = 1;
-		public int STATE_FAILED = 2;
-		public int STATE_SUCCESS = 3;
-		
-		private String id = "";
-		private String message = "";
-		private String command = "";
-		private int state = STATE_RECEIVED;
-		
-		HashMap<String, String> extras = new HashMap<String, String>();
-		
-		Command() {
-			
-		}
-	}
+ 
 }
