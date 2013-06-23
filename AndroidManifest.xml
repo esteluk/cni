@@ -64,6 +64,10 @@
             android:name="uk.co.commandandinfluence.MissionActivity"
             android:label="@string/title_activity_mission" >
         </activity>
+        <activity
+            android:name="uk.co.commandandinfluence.MapActivity"
+            android:label="@string/title_activity_map" >
+        </activity>
     </application>
 
 </manifest>

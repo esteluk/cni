@@ -42,7 +42,7 @@ public class GcmBroadcastReceiver extends BroadcastReceiver {
         String msg = extras.getString("message");
         
         PendingIntent contentIntent = PendingIntent.getActivity(ctx, 0,
-                new Intent(ctx, AuthActivity.class), 0);
+                new Intent(ctx, MissionActivity.class), 0);
 
         
 	    Notification noti = new Notification.BigPictureStyle(

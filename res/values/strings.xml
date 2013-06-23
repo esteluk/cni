@@ -10,5 +10,9 @@
     <string name="auth_firstname_hint">First name</string>
     <string name="auth_password_hint">Password</string>
     <string name="auth_submit_text">Submit</string>
+    <string name="mission_image_desc">Image of your target</string>
+    <string name="mission_button_confirm">Accept</string>
+    <string name="mission_button_decline">Decline</string>
+    <string name="title_activity_map">MapActivity</string>
 
 </resources>

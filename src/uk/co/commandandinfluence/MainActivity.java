@@ -17,6 +17,9 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -81,13 +84,21 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
+		// Open prefs
+		mPrefs = getSharedPreferences("SharedPreferences", Context.MODE_PRIVATE);
+		mEditor = mPrefs.edit();
+		
 		// Cloudbase init
 		cbHelper = new CBHelper("commandandinfluence", getString(R.string.cloudbase_secret_key), this);
 		cbHelper.setPassword(Utils.md5(getString(R.string.cloudbase_app_password)));
 		
 		// Pusher init
 		HttpAuthorizer authoriser = new HttpAuthorizer("http://jakexks.com/pusher/auth.php");
+		HashMap<String, String> map = new HashMap<String, String>();
+		map.put("id", mPrefs.getString("USER_ID", ""));
+		authoriser.setQueryStringParameters(map);
 		PusherOptions options = new PusherOptions().setAuthorizer(authoriser);
+		
 		
 		pusher = new Pusher("7d3ebc72c0912d712cd6", options);
 		
@@ -104,8 +115,6 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 		mLocationRequest.setInterval(UPDATE_INTERVAL);
 		mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
 		
-		mPrefs = getSharedPreferences("SharedPreferences", Context.MODE_PRIVATE);
-		mEditor = mPrefs.edit();
 		mUpdatesRequested = false;
 		
 	}
@@ -138,12 +147,27 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
         
         final ListView list = (ListView) findViewById(R.id.main_list);
 		final List<String> commands = new ArrayList<String>();
+		final List<Command> commandArray = new ArrayList<Command>();
 				
 		/**
 		 * Configure the list view to an array backup data
 		 */
 		final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, commands);
 		list.setAdapter(adapter);
+		
+		list.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> aView, View view, int position,
+					long id) {
+				// TODO Auto-generated method stub
+				Command command = commandArray.get(position);
+				if (command.command.equals("goto")) {
+					
+				}
+			}
+			
+		});
 				
         
 		// Connect
@@ -232,7 +256,7 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
  					@Override
  					public void run() {
  						// TODO Auto-generated method stub
- 						commands.add(0, command.command);
+ 						commands.add(0, command.command + " " + command.message);
  						adapter.notifyDataSetChanged();
  					}
  					
@@ -265,7 +289,9 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 		mEditor.putBoolean("KEY_UPDATES_ON", mUpdatesRequested);
         mEditor.commit();
         
-        pusher.unsubscribe("presence-game-1");
+        if (pusher.getConnection().getState() != ConnectionState.DISCONNECTED) {
+        	pusher.unsubscribe("presence-game-1");
+        }
         pusher.disconnect();
 		
 		super.onPause();
@@ -472,7 +498,10 @@ GooglePlayServicesClient.OnConnectionFailedListener, LocationListener {
 	 * @author nathan
 	 */
 	class Command {
+		private String message = "";
 		private String command = "";
+		
+		HashMap<String, String> extras = new HashMap<String, String>();
 		
 		Command() {
 			
